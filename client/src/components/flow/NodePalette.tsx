@@ -20,9 +20,24 @@ import {
 } from '@mui/icons-material';
 
 import { useFlow } from '../../contexts/FlowContext';
+import { NodeType } from '../../types';
+
+interface NodeDefinition {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface NodeCategory {
+  id: string;
+  name: string;
+  icon: JSX.Element;
+  color: string;
+  nodes: NodeDefinition[];
+}
 
 // Node type definitions
-const nodeCategories = [
+const nodeCategories: NodeCategory[] = [
   {
     id: 'triggers',
     name: 'Triggers',
@@ -68,12 +83,15 @@ const nodeCategories = [
   },
 ];
 
-const NodePalette = () => {
+const NodePalette: React.FC = () => {
   const { addNode } = useFlow();
 
   // Handle drag start for a node
-  const onDragStart = (event, nodeType, nodeSubtype) => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({ type: nodeType, subtype: nodeSubtype }));
+  const onDragStart = (event: React.DragEvent<HTMLLIElement>, nodeType: string, nodeSubtype: string): void => {
+    event.dataTransfer.setData('application/reactflow', JSON.stringify({ 
+      type: nodeType, 
+      subtype: nodeSubtype 
+    }));
     event.dataTransfer.effectAllowed = 'move';
   };
 
@@ -106,7 +124,11 @@ const NodePalette = () => {
                   <ListItem
                     button
                     draggable
-                    onDragStart={(event) => onDragStart(event, category.id.slice(0, -1), node.id)}
+                    onDragStart={(event) => onDragStart(
+                      event, 
+                      category.id.slice(0, -1) as NodeType, 
+                      node.id
+                    )}
                     sx={{
                       cursor: 'grab',
                       '&:hover': {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Snackbar, Alert } from '@mui/material';
 import { useUI } from '../contexts/UIContext';
 
-const Notification = () => {
+const Notification: React.FC = () => {
   const { notification, clearNotification } = useUI();
 
   if (!notification) return null;

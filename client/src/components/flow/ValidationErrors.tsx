@@ -14,7 +14,12 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 
-const ValidationErrors = ({ errors, onClose }) => {
+interface ValidationErrorsProps {
+  errors: string[];
+  onClose?: () => void;
+}
+
+const ValidationErrors: React.FC<ValidationErrorsProps> = ({ errors, onClose }) => {
   if (!errors || errors.length === 0) {
     return null;
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
@@ -15,20 +15,27 @@ import {
 import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
+
+const Login: React.FC = () => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Get the redirect path from location state or default to dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
+  const locationState = location.state as LocationState;
+  const from = locationState?.from?.pathname || '/dashboard';
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Basic validation
@@ -48,7 +55,7 @@ const Login = () => {
     try {
       await login(email, password);
       navigate(from, { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);

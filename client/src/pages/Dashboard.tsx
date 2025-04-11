@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, MouseEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -31,15 +31,16 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useUI } from '../contexts/UIContext';
+import { Flow } from '../types';
 
-const Dashboard = () => {
-  const [flows, setFlows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedFlowId, setSelectedFlowId] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+const Dashboard: React.FC = () => {
+  const [flows, setFlows] = useState<Flow[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   
   const { showNotification } = useUI();
   
@@ -49,15 +50,16 @@ const Dashboard = () => {
   }, []);
   
   // Fetch flows from API
-  const fetchFlows = async () => {
+  const fetchFlows = async (): Promise<void> => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await axios.get('/api/flows');
+      const response = await axios.get<{ flows: Flow[] }>('/api/flows');
       setFlows(response.data.flows || []);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch flows');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'Failed to fetch flows';
+      setError(errorMessage);
       showNotification('Failed to fetch flows', 'error');
     } finally {
       setLoading(false);
@@ -65,30 +67,30 @@ const Dashboard = () => {
   };
   
   // Handle search term change
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
   };
   
   // Filter flows based on search term
   const filteredFlows = flows.filter((flow) =>
     flow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    flow.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    (flow.description?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
   
   // Handle flow menu open
-  const handleMenuOpen = (event, flowId) => {
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>, flowId: string): void => {
     setAnchorEl(event.currentTarget);
     setSelectedFlowId(flowId);
   };
   
   // Handle flow menu close
-  const handleMenuClose = () => {
+  const handleMenuClose = (): void => {
     setAnchorEl(null);
     setSelectedFlowId(null);
   };
   
   // Handle delete flow
-  const handleDeleteFlow = async () => {
+  const handleDeleteFlow = async (): Promise<void> => {
     if (!selectedFlowId) return;
     
     try {
@@ -104,7 +106,7 @@ const Dashboard = () => {
   };
   
   // Handle duplicate flow
-  const handleDuplicateFlow = async () => {
+  const handleDuplicateFlow = async (): Promise<void> => {
     if (!selectedFlowId) return;
     
     const flowToDuplicate = flows.find((flow) => flow.id === selectedFlowId);
@@ -112,13 +114,19 @@ const Dashboard = () => {
     if (!flowToDuplicate) return;
     
     try {
-      const duplicatedFlow = {
+      const duplicatedFlow: Omit<Flow, 'id'> = {
         ...flowToDuplicate,
         name: `${flowToDuplicate.name} (Copy)`,
-        id: undefined,
       };
       
-      const response = await axios.post('/api/flows', duplicatedFlow);
+      // Remove id property
+      const { id, ...flowWithoutId } = flowToDuplicate;
+      
+      const response = await axios.post<Flow>('/api/flows', {
+        ...flowWithoutId,
+        name: `${flowToDuplicate.name} (Copy)`,
+      });
+      
       setFlows([...flows, response.data]);
       showNotification('Flow duplicated successfully', 'success');
     } catch (err) {
@@ -210,7 +218,7 @@ const Dashboard = () => {
                     </Typography>
                     <IconButton
                       size="small"
-                      onClick={(e) => handleMenuOpen(e, flow.id)}
+                      onClick={(e) => flow.id && handleMenuOpen(e, flow.id)}
                       aria-label="flow options"
                     >
                       <MoreIcon />
@@ -221,11 +229,11 @@ const Dashboard = () => {
                   </Typography>
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="caption" color="text.secondary">
-                    Created: {new Date(flow.createdAt).toLocaleDateString()}
+                    Created: {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString() : 'N/A'}
                   </Typography>
                   <br />
                   <Typography variant="caption" color="text.secondary">
-                    Last updated: {new Date(flow.updatedAt).toLocaleDateString()}
+                    Last updated: {flow.updatedAt ? new Date(flow.updatedAt).toLocaleDateString() : 'N/A'}
                   </Typography>
                 </CardContent>
                 <CardActions>

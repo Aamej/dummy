@@ -5,7 +5,7 @@ import Header from './Header';
 import Notification from './Notification';
 import { useUI } from '../contexts/UIContext';
 
-const Layout = () => {
+const Layout: React.FC = () => {
   const { notification } = useUI();
 
   return (

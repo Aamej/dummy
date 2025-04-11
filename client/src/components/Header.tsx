@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -15,15 +15,15 @@ import { Help as HelpIcon, AccountCircle } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 
-const Header = () => {
+const Header: React.FC = () => {
   const { currentUser, logout, isAuthenticated } = useAuth();
   const { setIsHelpModalOpen } = useUI();
   const navigate = useNavigate();
   
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
   
-  const handleMenu = (event) => {
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 

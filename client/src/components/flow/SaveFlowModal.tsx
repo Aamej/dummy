@@ -9,13 +9,20 @@ import {
   Box,
 } from '@mui/material';
 import { useFlow } from '../../contexts/FlowContext';
+import { FormErrors } from '../../types';
 
-const SaveFlowModal = ({ open, onClose, onSave }) => {
+interface SaveFlowModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+const SaveFlowModal: React.FC<SaveFlowModalProps> = ({ open, onClose, onSave }) => {
   const { flowName, flowDescription, setFlowName, setFlowDescription } = useFlow();
   
-  const [name, setName] = useState(flowName);
-  const [description, setDescription] = useState(flowDescription);
-  const [errors, setErrors] = useState({});
+  const [name, setName] = useState<string>(flowName);
+  const [description, setDescription] = useState<string>(flowDescription);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Update local state when flow name/description changes
   useEffect(() => {
@@ -24,19 +31,19 @@ const SaveFlowModal = ({ open, onClose, onSave }) => {
   }, [flowName, flowDescription, open]);
 
   // Handle name change
-  const handleNameChange = (e) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setName(e.target.value);
   };
 
   // Handle description change
-  const handleDescriptionChange = (e) => {
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setDescription(e.target.value);
   };
 
   // Handle save
-  const handleSave = () => {
+  const handleSave = (): void => {
     // Validate
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     if (!name.trim()) {
       newErrors.name = 'Flow name is required';

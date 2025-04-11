@@ -1,27 +1,69 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { 
+  Flow, 
+  FlowNode, 
+  FlowEdge, 
+  NodeType, 
+  NodePosition, 
+  NodeData,
+  ValidationResult 
+} from '../types';
 
-const FlowContext = createContext();
-
-export function useFlow() {
-  return useContext(FlowContext);
+interface FlowContextType {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  selectedNode: FlowNode | null;
+  flowName: string;
+  flowDescription: string;
+  flowId: string | null;
+  isModified: boolean;
+  loading: boolean;
+  error: string | null;
+  setSelectedNode: (node: FlowNode | null) => void;
+  setFlowName: (name: string) => void;
+  setFlowDescription: (description: string) => void;
+  addNode: (type: NodeType, subtype: string, position: NodePosition) => FlowNode;
+  updateNodeConfig: (nodeId: string, config: Partial<NodeData>) => void;
+  removeNode: (nodeId: string) => void;
+  addEdge: (params: Omit<FlowEdge, 'id'>) => FlowEdge;
+  removeEdge: (edgeId: string) => void;
+  updateNodePositions: (updatedNodes: FlowNode[]) => void;
+  loadFlow: (id: string) => Promise<Flow>;
+  saveFlow: () => Promise<Flow>;
+  createNewFlow: () => void;
+  validateFlow: () => ValidationResult;
 }
 
-export function FlowProvider({ children }) {
-  const [nodes, setNodes] = useState([]);
-  const [edges, setEdges] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [flowName, setFlowName] = useState('Untitled Flow');
-  const [flowDescription, setFlowDescription] = useState('');
-  const [flowId, setFlowId] = useState(null);
-  const [isModified, setIsModified] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+interface FlowProviderProps {
+  children: ReactNode;
+}
+
+const FlowContext = createContext<FlowContextType | undefined>(undefined);
+
+export function useFlow(): FlowContextType {
+  const context = useContext(FlowContext);
+  if (context === undefined) {
+    throw new Error('useFlow must be used within a FlowProvider');
+  }
+  return context;
+}
+
+export function FlowProvider({ children }: FlowProviderProps): JSX.Element {
+  const [nodes, setNodes] = useState<FlowNode[]>([]);
+  const [edges, setEdges] = useState<FlowEdge[]>([]);
+  const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
+  const [flowName, setFlowName] = useState<string>('Untitled Flow');
+  const [flowDescription, setFlowDescription] = useState<string>('');
+  const [flowId, setFlowId] = useState<string | null>(null);
+  const [isModified, setIsModified] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add a new node to the canvas
-  const addNode = useCallback((type, subtype, position) => {
-    const newNode = {
+  const addNode = useCallback((type: NodeType, subtype: string, position: NodePosition): FlowNode => {
+    const newNode: FlowNode = {
       id: `node-${uuidv4()}`,
       type,
       subtype,
@@ -37,7 +79,7 @@ export function FlowProvider({ children }) {
   }, []);
 
   // Update a node's configuration
-  const updateNodeConfig = useCallback((nodeId, config) => {
+  const updateNodeConfig = useCallback((nodeId: string, config: Partial<NodeData>): void => {
     setNodes((prevNodes) =>
       prevNodes.map((node) =>
         node.id === nodeId ? { ...node, data: { ...node.data, ...config } } : node
@@ -47,7 +89,7 @@ export function FlowProvider({ children }) {
   }, []);
 
   // Remove a node from the canvas
-  const removeNode = useCallback((nodeId) => {
+  const removeNode = useCallback((nodeId: string): void => {
     setNodes((prevNodes) => prevNodes.filter((node) => node.id !== nodeId));
     setEdges((prevEdges) =>
       prevEdges.filter(
@@ -63,8 +105,8 @@ export function FlowProvider({ children }) {
   }, [selectedNode]);
 
   // Add a connection between nodes
-  const addEdge = useCallback((params) => {
-    const newEdge = {
+  const addEdge = useCallback((params: Omit<FlowEdge, 'id'>): FlowEdge => {
+    const newEdge: FlowEdge = {
       id: `edge-${uuidv4()}`,
       ...params,
     };
@@ -76,36 +118,37 @@ export function FlowProvider({ children }) {
   }, []);
 
   // Remove a connection
-  const removeEdge = useCallback((edgeId) => {
+  const removeEdge = useCallback((edgeId: string): void => {
     setEdges((prevEdges) => prevEdges.filter((edge) => edge.id !== edgeId));
     setIsModified(true);
   }, []);
 
   // Update node positions after drag
-  const updateNodePositions = useCallback((updatedNodes) => {
+  const updateNodePositions = useCallback((updatedNodes: FlowNode[]): void => {
     setNodes(updatedNodes);
     setIsModified(true);
   }, []);
 
   // Load a flow from the server
-  const loadFlow = useCallback(async (id) => {
+  const loadFlow = useCallback(async (id: string): Promise<Flow> => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await axios.get(`/api/flows/${id}`);
+      const response = await axios.get<Flow>(`/api/flows/${id}`);
       const flow = response.data;
       
-      setFlowId(flow.id);
+      setFlowId(flow.id || null);
       setFlowName(flow.name);
-      setFlowDescription(flow.description);
+      setFlowDescription(flow.description || '');
       setNodes(flow.nodes);
       setEdges(flow.edges);
       setIsModified(false);
       
       return flow;
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to load flow');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to load flow';
+      setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -113,11 +156,11 @@ export function FlowProvider({ children }) {
   }, []);
 
   // Save the current flow to the server
-  const saveFlow = useCallback(async () => {
+  const saveFlow = useCallback(async (): Promise<Flow> => {
     setLoading(true);
     setError(null);
     
-    const flowData = {
+    const flowData: Omit<Flow, 'id'> = {
       name: flowName,
       description: flowDescription,
       nodes,
@@ -129,17 +172,18 @@ export function FlowProvider({ children }) {
       
       if (flowId) {
         // Update existing flow
-        response = await axios.put(`/api/flows/${flowId}`, flowData);
+        response = await axios.put<Flow>(`/api/flows/${flowId}`, flowData);
       } else {
         // Create new flow
-        response = await axios.post('/api/flows', flowData);
-        setFlowId(response.data.id);
+        response = await axios.post<Flow>('/api/flows', flowData);
+        setFlowId(response.data.id || null);
       }
       
       setIsModified(false);
       return response.data;
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to save flow');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to save flow';
+      setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -147,7 +191,7 @@ export function FlowProvider({ children }) {
   }, [flowId, flowName, flowDescription, nodes, edges]);
 
   // Create a new empty flow
-  const createNewFlow = useCallback(() => {
+  const createNewFlow = useCallback((): void => {
     setFlowId(null);
     setFlowName('Untitled Flow');
     setFlowDescription('');
@@ -158,8 +202,8 @@ export function FlowProvider({ children }) {
   }, []);
 
   // Validate the flow
-  const validateFlow = useCallback(() => {
-    const errors = [];
+  const validateFlow = useCallback((): ValidationResult => {
+    const errors: string[] = [];
     
     // Check if there's at least one trigger node
     const hasTrigger = nodes.some((node) => node.type === 'trigger');
@@ -174,7 +218,7 @@ export function FlowProvider({ children }) {
     }
     
     // Check if all nodes are connected
-    const connectedNodeIds = new Set();
+    const connectedNodeIds = new Set<string>();
     
     // Add all nodes that are connected by edges
     edges.forEach((edge) => {
@@ -194,7 +238,7 @@ export function FlowProvider({ children }) {
     };
   }, [nodes, edges]);
 
-  const value = {
+  const value: FlowContextType = {
     nodes,
     edges,
     selectedNode,

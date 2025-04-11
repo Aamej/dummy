@@ -5,6 +5,7 @@ import { Save as SaveIcon, PlayArrow as RunIcon } from '@mui/icons-material';
 
 import { useFlow } from '../contexts/FlowContext';
 import { useUI } from '../contexts/UIContext';
+import { ValidationResult, Flow } from '../types';
 
 import FlowCanvas from '../components/flow/FlowCanvas';
 import NodePalette from '../components/flow/NodePalette';
@@ -13,8 +14,13 @@ import FlowToolbar from '../components/flow/FlowToolbar';
 import SaveFlowModal from '../components/flow/SaveFlowModal';
 import ValidationErrors from '../components/flow/ValidationErrors';
 
-const FlowBuilder = () => {
-  const { id } = useParams();
+interface FlowParams {
+  id: string;
+  [key: string]: string | undefined;
+}
+
+const FlowBuilder: React.FC = () => {
+  const { id } = useParams<FlowParams>();
   const navigate = useNavigate();
   const { 
     flowName, 
@@ -36,13 +42,13 @@ const FlowBuilder = () => {
     showNotification 
   } = useUI();
   
-  const [validationResult, setValidationResult] = useState({ isValid: true, errors: [] });
-  const [isSaving, setIsSaving] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult>({ isValid: true, errors: [] });
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Load flow if ID is provided
   useEffect(() => {
     if (id && id !== 'new') {
-      loadFlow(id).catch((err) => {
+      loadFlow(id).catch((err: Error) => {
         showNotification(`Error loading flow: ${err.message}`, 'error');
         navigate('/dashboard');
       });
@@ -52,7 +58,7 @@ const FlowBuilder = () => {
   }, [id, loadFlow, createNewFlow, navigate, showNotification]);
 
   // Handle save flow
-  const handleSaveFlow = async () => {
+  const handleSaveFlow = async (): Promise<void> => {
     // Validate flow before saving
     const validation = validateFlow();
     setValidationResult(validation);
@@ -72,7 +78,7 @@ const FlowBuilder = () => {
       if (!flowId && savedFlow.id) {
         navigate(`/flows/${savedFlow.id}`, { replace: true });
       }
-    } catch (err) {
+    } catch (err: any) {
       showNotification(`Error saving flow: ${err.message}`, 'error');
     } finally {
       setIsSaving(false);
@@ -81,7 +87,7 @@ const FlowBuilder = () => {
   };
 
   // Handle run flow (validate only for now)
-  const handleRunFlow = () => {
+  const handleRunFlow = (): void => {
     const validation = validateFlow();
     setValidationResult(validation);
     
@@ -93,7 +99,7 @@ const FlowBuilder = () => {
   };
 
   // Show save modal
-  const handleShowSaveModal = () => {
+  const handleShowSaveModal = (): void => {
     setIsSaveModalOpen(true);
   };
 

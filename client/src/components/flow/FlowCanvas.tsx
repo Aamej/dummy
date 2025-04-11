@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -6,11 +6,21 @@ import ReactFlow, {
   addEdge,
   useNodesState,
   useEdgesState,
+  Node,
+  Edge,
+  NodeMouseHandler,
+  OnNodesDelete,
+  OnEdgesDelete,
+  Connection,
+  OnConnect,
+  Viewport,
+  NodeTypes,
 } from 'react-flow-renderer';
 import { Box } from '@mui/material';
 
 import { useFlow } from '../../contexts/FlowContext';
 import { useUI } from '../../contexts/UIContext';
+import { FlowNode, FlowEdge } from '../../types';
 
 // Custom node types
 import TriggerNode from './nodes/TriggerNode';
@@ -19,14 +29,14 @@ import ConditionNode from './nodes/ConditionNode';
 import TransformerNode from './nodes/TransformerNode';
 
 // Define custom node types
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
   trigger: TriggerNode,
   action: ActionNode,
   condition: ConditionNode,
   transformer: TransformerNode,
 };
 
-const FlowCanvas = () => {
+const FlowCanvas: React.FC = () => {
   const {
     nodes,
     edges,
@@ -40,38 +50,38 @@ const FlowCanvas = () => {
   const { zoomLevel, panPosition, setZoomLevel, setPanPosition } = useUI();
 
   // Use ReactFlow's state management hooks
-  const [reactFlowNodes, setReactFlowNodes, onNodesChange] = useNodesState(nodes);
-  const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState(edges);
+  const [reactFlowNodes, setReactFlowNodes, onNodesChange] = useNodesState(nodes as Node[]);
+  const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState(edges as Edge[]);
 
   // Update Flow context when nodes change
-  React.useEffect(() => {
-    updateNodePositions(reactFlowNodes);
+  useEffect(() => {
+    updateNodePositions(reactFlowNodes as FlowNode[]);
   }, [reactFlowNodes, updateNodePositions]);
 
   // Handle node selection
-  const onNodeClick = useCallback((_, node) => {
-    setSelectedNode(node);
+  const onNodeClick: NodeMouseHandler = useCallback((_, node) => {
+    setSelectedNode(node as FlowNode);
   }, [setSelectedNode]);
 
   // Handle node deletion
-  const onNodeDelete = useCallback((nodesToDelete) => {
+  const onNodeDelete: OnNodesDelete = useCallback((nodesToDelete) => {
     nodesToDelete.forEach((node) => removeNode(node.id));
   }, [removeNode]);
 
   // Handle edge deletion
-  const onEdgeDelete = useCallback((edgesToDelete) => {
+  const onEdgeDelete: OnEdgesDelete = useCallback((edgesToDelete) => {
     edgesToDelete.forEach((edge) => removeEdge(edge.id));
   }, [removeEdge]);
 
   // Handle connection between nodes
-  const onConnect = useCallback((params) => {
+  const onConnect: OnConnect = useCallback((params: Connection) => {
     const newEdge = addFlowEdge(params);
     setReactFlowEdges((eds) => addEdge(params, eds));
     return newEdge;
   }, [addFlowEdge, setReactFlowEdges]);
 
   // Handle panning and zooming
-  const onMoveEnd = useCallback((_, viewport) => {
+  const onMoveEnd = useCallback((_: React.MouseEvent, viewport: Viewport) => {
     setZoomLevel(viewport.zoom);
     setPanPosition({ x: viewport.x, y: viewport.y });
   }, [setZoomLevel, setPanPosition]);

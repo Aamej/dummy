@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -15,20 +15,21 @@ import {
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { FormErrors } from '../types';
 
-const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+const Register: React.FC = () => {
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState<boolean>(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
   
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
     
     if (!name.trim()) {
       newErrors.name = 'Name is required';
@@ -54,7 +55,7 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -66,7 +67,7 @@ const Register = () => {
     try {
       await register(name, email, password);
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setErrors({ submit: err.message });
     } finally {
       setLoading(false);

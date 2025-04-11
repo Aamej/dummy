@@ -19,7 +19,7 @@ import {
 
 import { useUI } from '../../contexts/UIContext';
 
-const FlowToolbar = () => {
+const FlowToolbar: React.FC = () => {
   const {
     zoomLevel,
     setZoomLevel,
@@ -29,27 +29,27 @@ const FlowToolbar = () => {
   } = useUI();
 
   // Handle zoom in
-  const handleZoomIn = () => {
+  const handleZoomIn = (): void => {
     setZoomLevel(Math.min(zoomLevel + 0.1, 2));
   };
 
   // Handle zoom out
-  const handleZoomOut = () => {
+  const handleZoomOut = (): void => {
     setZoomLevel(Math.max(zoomLevel - 0.1, 0.5));
   };
 
   // Handle fit view
-  const handleFitView = () => {
+  const handleFitView = (): void => {
     resetView();
   };
 
   // Handle toggle sidebar
-  const handleToggleSidebar = () => {
+  const handleToggleSidebar = (): void => {
     toggleSidebar();
   };
 
   // Handle show help
-  const handleShowHelp = () => {
+  const handleShowHelp = (): void => {
     setIsHelpModalOpen(true);
   };
 
