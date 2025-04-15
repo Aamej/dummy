@@ -7,6 +7,7 @@ import {
   MenuItem,
   FormHelperText,
   Grid,
+  SelectChangeEvent,
 } from '@mui/material';
 import { FormErrors } from '../../../types';
 
@@ -16,8 +17,19 @@ interface HttpActionFormProps {
   errors: FormErrors;
 }
 
+interface HttpActionFormComponent extends React.FC<HttpActionFormProps> {
+  validate: (config: Record<string, any>) => FormErrors;
+}
+
 const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, errors }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name) {
+      onChange({ [name]: value });
+    }
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     if (name) {
       onChange({ [name]: value });
@@ -35,7 +47,7 @@ const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, error
             name="method"
             value={config.method || ''}
             label="Method"
-            onChange={handleChange}
+            onChange={handleSelectChange}
           >
             <MenuItem value="GET">GET</MenuItem>
             <MenuItem value="POST">POST</MenuItem>
@@ -52,7 +64,7 @@ const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, error
           label="URL"
           name="url"
           value={config.url || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           error={!!errors.url}
           helperText={errors.url}
         />
@@ -63,7 +75,7 @@ const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, error
           label="Headers"
           name="headers"
           value={config.headers || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           multiline
           rows={3}
           placeholder="Enter headers in JSON format"
@@ -77,7 +89,7 @@ const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, error
           label="Body"
           name="body"
           value={config.body || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           multiline
           rows={4}
           placeholder="Enter request body"
@@ -89,20 +101,22 @@ const HttpActionForm: React.FC<HttpActionFormProps> = ({ config, onChange, error
   );
 };
 
-// Static validation method
-HttpActionForm.validate = (config: Record<string, any>): FormErrors => {
+
+
+const HttpActionFormWithValidation = HttpActionForm as HttpActionFormComponent;
+HttpActionFormWithValidation.validate = (config: Record<string, any>): FormErrors => {
   const errors: FormErrors = {};
-  
+
   if (!config.method) {
     errors.method = 'Method is required';
   }
-  
+
   if (!config.url) {
     errors.url = 'URL is required';
   } else if (!config.url.startsWith('http')) {
     errors.url = 'URL must start with http:// or https://';
   }
-  
+
   if (config.headers) {
     try {
       JSON.parse(config.headers);
@@ -110,8 +124,8 @@ HttpActionForm.validate = (config: Record<string, any>): FormErrors => {
       errors.headers = 'Headers must be valid JSON';
     }
   }
-  
+
   return errors;
 };
 
-export default HttpActionForm;
+export default HttpActionFormWithValidation;

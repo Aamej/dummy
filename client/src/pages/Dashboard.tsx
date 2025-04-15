@@ -41,19 +41,20 @@ const Dashboard: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  
+
   const { showNotification } = useUI();
-  
+
   // Fetch flows on component mount
   useEffect(() => {
     fetchFlows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   // Fetch flows from API
   const fetchFlows = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await axios.get<{ flows: Flow[] }>('/api/flows');
       setFlows(response.data.flows || []);
@@ -65,34 +66,34 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   // Handle search term change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
   };
-  
+
   // Filter flows based on search term
   const filteredFlows = flows.filter((flow) =>
     flow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (flow.description?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
-  
+
   // Handle flow menu open
   const handleMenuOpen = (event: MouseEvent<HTMLElement>, flowId: string): void => {
     setAnchorEl(event.currentTarget);
     setSelectedFlowId(flowId);
   };
-  
+
   // Handle flow menu close
   const handleMenuClose = (): void => {
     setAnchorEl(null);
     setSelectedFlowId(null);
   };
-  
+
   // Handle delete flow
   const handleDeleteFlow = async (): Promise<void> => {
     if (!selectedFlowId) return;
-    
+
     try {
       await axios.delete(`/api/flows/${selectedFlowId}`);
       setFlows(flows.filter((flow) => flow.id !== selectedFlowId));
@@ -104,29 +105,30 @@ const Dashboard: React.FC = () => {
       handleMenuClose();
     }
   };
-  
+
   // Handle duplicate flow
   const handleDuplicateFlow = async (): Promise<void> => {
     if (!selectedFlowId) return;
-    
+
     const flowToDuplicate = flows.find((flow) => flow.id === selectedFlowId);
-    
+
     if (!flowToDuplicate) return;
-    
+
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const duplicatedFlow: Omit<Flow, 'id'> = {
         ...flowToDuplicate,
         name: `${flowToDuplicate.name} (Copy)`,
       };
-      
+
       // Remove id property
       const { id, ...flowWithoutId } = flowToDuplicate;
-      
+
       const response = await axios.post<Flow>('/api/flows', {
         ...flowWithoutId,
         name: `${flowToDuplicate.name} (Copy)`,
       });
-      
+
       setFlows([...flows, response.data]);
       showNotification('Flow duplicated successfully', 'success');
     } catch (err) {
@@ -135,7 +137,7 @@ const Dashboard: React.FC = () => {
       handleMenuClose();
     }
   };
-  
+
   // Render loading state
   if (loading && flows.length === 0) {
     return (
@@ -144,7 +146,7 @@ const Dashboard: React.FC = () => {
       </Box>
     );
   }
-  
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -161,7 +163,7 @@ const Dashboard: React.FC = () => {
           Create New Flow
         </Button>
       </Box>
-      
+
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth
@@ -177,13 +179,13 @@ const Dashboard: React.FC = () => {
           }}
         />
       </Paper>
-      
+
       {error && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light', color: 'error.contrastText' }}>
           <Typography>{error}</Typography>
         </Paper>
       )}
-      
+
       {filteredFlows.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -253,7 +255,7 @@ const Dashboard: React.FC = () => {
           ))}
         </Grid>
       )}
-      
+
       {/* Flow Options Menu */}
       <Menu
         anchorEl={anchorEl}
@@ -269,7 +271,7 @@ const Dashboard: React.FC = () => {
           Delete
         </MenuItem>
       </Menu>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}

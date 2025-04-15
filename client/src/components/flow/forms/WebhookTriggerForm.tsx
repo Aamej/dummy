@@ -9,6 +9,7 @@ import {
   Grid,
   Switch,
   FormControlLabel,
+  SelectChangeEvent,
 } from '@mui/material';
 import { FormErrors } from '../../../types';
 
@@ -18,8 +19,19 @@ interface WebhookTriggerFormProps {
   errors: FormErrors;
 }
 
+interface WebhookTriggerFormComponent extends React.FC<WebhookTriggerFormProps> {
+  validate: (config: Record<string, any>) => FormErrors;
+}
+
 const WebhookTriggerForm: React.FC<WebhookTriggerFormProps> = ({ config, onChange, errors }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name) {
+      onChange({ [name]: value });
+    }
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     if (name) {
       onChange({ [name]: value });
@@ -41,7 +53,7 @@ const WebhookTriggerForm: React.FC<WebhookTriggerFormProps> = ({ config, onChang
           label="Path"
           name="path"
           value={config.path || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           error={!!errors.path}
           helperText={errors.path || 'The URL path for this webhook (e.g., /my-webhook)'}
         />
@@ -55,7 +67,7 @@ const WebhookTriggerForm: React.FC<WebhookTriggerFormProps> = ({ config, onChang
             name="method"
             value={config.method || ''}
             label="Method"
-            onChange={handleChange}
+            onChange={handleSelectChange}
           >
             <MenuItem value="GET">GET</MenuItem>
             <MenuItem value="POST">POST</MenuItem>
@@ -84,7 +96,7 @@ const WebhookTriggerForm: React.FC<WebhookTriggerFormProps> = ({ config, onChang
           label="Description"
           name="description"
           value={config.description || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           multiline
           rows={2}
           placeholder="Enter a description for this webhook"
@@ -94,21 +106,23 @@ const WebhookTriggerForm: React.FC<WebhookTriggerFormProps> = ({ config, onChang
   );
 };
 
-// Static validation method
-WebhookTriggerForm.validate = (config: Record<string, any>): FormErrors => {
+
+
+const WebhookTriggerFormWithValidation = WebhookTriggerForm as WebhookTriggerFormComponent;
+WebhookTriggerFormWithValidation.validate = (config: Record<string, any>): FormErrors => {
   const errors: FormErrors = {};
-  
+
   if (!config.path) {
     errors.path = 'Path is required';
   } else if (!config.path.startsWith('/')) {
     errors.path = 'Path must start with /';
   }
-  
+
   if (!config.method) {
     errors.method = 'Method is required';
   }
-  
+
   return errors;
 };
 
-export default WebhookTriggerForm;
+export default WebhookTriggerFormWithValidation;

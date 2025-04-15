@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -15,12 +15,13 @@ import ReactFlow, {
   OnConnect,
   Viewport,
   NodeTypes,
+  ReactFlowInstance,
 } from 'react-flow-renderer';
 import { Box } from '@mui/material';
 
 import { useFlow } from '../../contexts/FlowContext';
 import { useUI } from '../../contexts/UIContext';
-import { FlowNode, FlowEdge } from '../../types';
+import { FlowNode, FlowEdge, NodeType } from '../../types';
 
 // Custom node types
 import TriggerNode from './nodes/TriggerNode';
@@ -45,8 +46,13 @@ const FlowCanvas: React.FC = () => {
     updateNodePositions,
     removeNode,
     removeEdge,
+    addNode,
   } = useFlow();
-  
+
+  // Store the ReactFlow instance
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+
   const { zoomLevel, panPosition, setZoomLevel, setPanPosition } = useUI();
 
   // Use ReactFlow's state management hooks
@@ -75,19 +81,70 @@ const FlowCanvas: React.FC = () => {
 
   // Handle connection between nodes
   const onConnect: OnConnect = useCallback((params: Connection) => {
-    const newEdge = addFlowEdge(params);
-    setReactFlowEdges((eds) => addEdge(params, eds));
-    return newEdge;
+    // Ensure source and target are not null before adding edge
+    if (params.source && params.target) {
+      const edgeParams = {
+        source: params.source,
+        target: params.target,
+        sourceHandle: params.sourceHandle || undefined,
+        targetHandle: params.targetHandle || undefined
+      };
+      const newEdge = addFlowEdge(edgeParams);
+      setReactFlowEdges((eds) => addEdge(params, eds));
+      return newEdge;
+    }
+    return null;
   }, [addFlowEdge, setReactFlowEdges]);
 
   // Handle panning and zooming
-  const onMoveEnd = useCallback((_: React.MouseEvent, viewport: Viewport) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onMoveEnd = useCallback((event: any, viewport: Viewport) => {
     setZoomLevel(viewport.zoom);
     setPanPosition({ x: viewport.x, y: viewport.y });
   }, [setZoomLevel, setPanPosition]);
 
+  // Handle drop event
+  const onDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      if (!reactFlowInstance.current || !reactFlowWrapper.current) return;
+
+      // Get the data from the drag event
+      const dataStr = event.dataTransfer.getData('application/reactflow');
+      if (!dataStr) return;
+
+      try {
+        const { type, subtype } = JSON.parse(dataStr);
+
+        // Get the position where the node was dropped
+        const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+        const position = reactFlowInstance.current.project({
+          x: event.clientX - reactFlowBounds.left,
+          y: event.clientY - reactFlowBounds.top,
+        });
+
+        // Add the node to the flow
+        console.log('Adding node:', type, subtype, position);
+        addNode(type as NodeType, subtype, position);
+      } catch (error) {
+        console.error('Error adding node:', error);
+      }
+    },
+    [addNode]
+  );
+
+  // Handle drag over event
+  const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
   return (
-    <Box sx={{ height: '100%' }}>
+    <Box
+      sx={{ height: '100%', width: '100%' }}
+      ref={reactFlowWrapper}
+    >
       <ReactFlow
         nodes={reactFlowNodes}
         edges={reactFlowEdges}
@@ -98,9 +155,12 @@ const FlowCanvas: React.FC = () => {
         onEdgesDelete={onEdgeDelete}
         onConnect={onConnect}
         onMoveEnd={onMoveEnd}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         defaultZoom={zoomLevel}
         defaultPosition={[panPosition.x, panPosition.y]}
+        onInit={(instance) => (reactFlowInstance.current = instance)}
         fitView
         attributionPosition="bottom-right"
         deleteKeyCode="Delete"

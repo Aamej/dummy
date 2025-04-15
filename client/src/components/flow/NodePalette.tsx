@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemIcon,
   ListItemText,
   Accordion,
   AccordionSummary,
@@ -87,10 +87,11 @@ const NodePalette: React.FC = () => {
   const { addNode } = useFlow();
 
   // Handle drag start for a node
-  const onDragStart = (event: React.DragEvent<HTMLLIElement>, nodeType: string, nodeSubtype: string): void => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({ 
-      type: nodeType, 
-      subtype: nodeSubtype 
+  const onDragStart = (event: React.DragEvent<HTMLElement>, nodeType: string, nodeSubtype: string): void => {
+    console.log('Drag start:', nodeType, nodeSubtype);
+    event.dataTransfer.setData('application/reactflow', JSON.stringify({
+      type: nodeType,
+      subtype: nodeSubtype
     }));
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -125,8 +126,8 @@ const NodePalette: React.FC = () => {
                     button
                     draggable
                     onDragStart={(event) => onDragStart(
-                      event, 
-                      category.id.slice(0, -1) as NodeType, 
+                      event,
+                      category.id.slice(0, -1) as NodeType,
                       node.id
                     )}
                     sx={{
@@ -153,7 +154,7 @@ const NodePalette: React.FC = () => {
           </AccordionDetails>
         </Accordion>
       ))}
-      
+
       <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
         <Typography variant="caption" color="text.secondary">
           Tip: Drag nodes onto the canvas and connect them to create a workflow.

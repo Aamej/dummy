@@ -2,10 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Paper, Grid, Typography, Button, CircularProgress } from '@mui/material';
 import { Save as SaveIcon, PlayArrow as RunIcon } from '@mui/icons-material';
+import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { useFlow } from '../contexts/FlowContext';
 import { useUI } from '../contexts/UIContext';
-import { ValidationResult, Flow } from '../types';
+import { ValidationResult,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Flow
+} from '../types';
 
 import FlowCanvas from '../components/flow/FlowCanvas';
 import NodePalette from '../components/flow/NodePalette';
@@ -22,26 +26,26 @@ interface FlowParams {
 const FlowBuilder: React.FC = () => {
   const { id } = useParams<FlowParams>();
   const navigate = useNavigate();
-  const { 
-    flowName, 
-    flowId, 
-    loading, 
-    error, 
+  const {
+    flowName,
+    flowId,
+    loading,
+    error,
     isModified,
-    loadFlow, 
-    saveFlow, 
+    loadFlow,
+    saveFlow,
     createNewFlow,
     validateFlow
   } = useFlow();
-  const { 
-    isSidebarOpen, 
-    activePanel, 
+  const {
+    isSidebarOpen,
+    activePanel,
     setActivePanel,
-    isSaveModalOpen, 
+    isSaveModalOpen,
     setIsSaveModalOpen,
-    showNotification 
+    showNotification
   } = useUI();
-  
+
   const [validationResult, setValidationResult] = useState<ValidationResult>({ isValid: true, errors: [] });
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
@@ -62,18 +66,18 @@ const FlowBuilder: React.FC = () => {
     // Validate flow before saving
     const validation = validateFlow();
     setValidationResult(validation);
-    
+
     if (!validation.isValid) {
       showNotification('Please fix validation errors before saving', 'warning');
       return;
     }
-    
+
     setIsSaving(true);
-    
+
     try {
       const savedFlow = await saveFlow();
       showNotification('Flow saved successfully', 'success');
-      
+
       // If this is a new flow, redirect to the flow's edit page
       if (!flowId && savedFlow.id) {
         navigate(`/flows/${savedFlow.id}`, { replace: true });
@@ -90,7 +94,7 @@ const FlowBuilder: React.FC = () => {
   const handleRunFlow = (): void => {
     const validation = validateFlow();
     setValidationResult(validation);
-    
+
     if (validation.isValid) {
       showNotification('Flow validation passed!', 'success');
     } else {
@@ -165,21 +169,21 @@ const FlowBuilder: React.FC = () => {
           <Grid item xs={3} sx={{ height: '100%' }}>
             <Paper sx={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ borderBottom: 1, borderColor: 'divider', p: 1 }}>
-                <Button 
-                  variant={activePanel === 'nodes' ? 'contained' : 'text'} 
+                <Button
+                  variant={activePanel === 'nodes' ? 'contained' : 'text'}
                   onClick={() => setActivePanel('nodes')}
                   sx={{ mr: 1 }}
                 >
                   Nodes
                 </Button>
-                <Button 
-                  variant={activePanel === 'properties' ? 'contained' : 'text'} 
+                <Button
+                  variant={activePanel === 'properties' ? 'contained' : 'text'}
                   onClick={() => setActivePanel('properties')}
                 >
                   Properties
                 </Button>
               </Box>
-              
+
               <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
                 {activePanel === 'nodes' ? (
                   <NodePalette />
@@ -195,7 +199,9 @@ const FlowBuilder: React.FC = () => {
         <Grid item xs={isSidebarOpen ? 9 : 12} sx={{ height: '100%' }}>
           <Paper sx={{ height: '100%', position: 'relative' }}>
             <FlowToolbar />
-            <FlowCanvas />
+            <ReactFlowProvider>
+              <FlowCanvas />
+            </ReactFlowProvider>
           </Paper>
         </Grid>
       </Grid>

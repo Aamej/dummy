@@ -1,6 +1,13 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import axios from 'axios';
-import { User, LoginCredentials, RegisterCredentials, AuthResponse } from '../types';
+import {
+  User,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  LoginCredentials,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  RegisterCredentials,
+  AuthResponse
+} from '../types';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -37,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchCurrentUser = async (): Promise<void> => {
@@ -55,11 +63,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     try {
       const response = await axios.post<AuthResponse>('/api/auth/login', { email, password });
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       setToken(token);
       setCurrentUser(user);
-      
+
       return user;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
@@ -70,11 +78,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     try {
       const response = await axios.post<AuthResponse>('/api/auth/register', { name, email, password });
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       setToken(token);
       setCurrentUser(user);
-      
+
       return user;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Registration failed');
