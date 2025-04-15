@@ -21,7 +21,7 @@ export interface NodeData {
 export interface FlowNode {
   id: string;
   type: NodeType;
-  subtype: string;
+  subtype?: string;
   position: NodePosition;
   data: NodeData;
 }

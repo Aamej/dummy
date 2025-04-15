@@ -51,8 +51,17 @@ export function useFlow(): FlowContextType {
 }
 
 export function FlowProvider({ children }: FlowProviderProps): JSX.Element {
-  const [nodes, setNodes] = useState<FlowNode[]>([]);
-  const [edges, setEdges] = useState<FlowEdge[]>([]);
+  const [nodes, setNodes] = useState<FlowNode[]>([{
+    id: "1",
+    type: "trigger",
+    position: { x: 100, y: 100 },
+    data: { label: "Hello world" },
+  },]);
+  const [edges, setEdges] = useState<FlowEdge[]>([{
+    id: "e1-2",
+    source: "1",
+    target: "2",
+  },]);
   const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
   const [flowName, setFlowName] = useState<string>('Untitled Flow');
   const [flowDescription, setFlowDescription] = useState<string>('');
